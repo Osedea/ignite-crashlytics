@@ -1,0 +1,6 @@
+extends:
+  - osedea/esnext
+
+rules:
+  no-undef: off
+  flowtype/require-valid-file-annotation: off

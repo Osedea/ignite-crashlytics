@@ -1,36 +1,67 @@
-const NPM_MODULE_NAME = 'react-native-fabric'
+const NPM_MODULE_NAME = 'react-native-fabric';
 
 /**
  * Add ourself to the project.
  */
 const add = async function (context) {
-  const { ignite, print } = context
+    const { ignite, print, filesystem, system } = context;
 
-  const spinner = print.spin(`adding '${NPM_MODULE_NAME}' npm module`);
-  spinner.start();
-  // install a npm module
-  await ignite.addModule(NPM_MODULE_NAME, { linking: true })
-  spinner.succeed(`added '${NPM_MODULE_NAME}' module`);
+    // Get android module name
+    const NPMPackage = filesystem.read('package.json', 'json');
+    const name = NPMPackage.name;
 
-  const podfileExists = await filesystem.exists('./ios/Podfile');
-  // initialize Podfile if it does not exist
-  if (!podfileExists) {
-    spinner.text = 'initialize podfile';
-    spinner.start();
-    await system.spawn('pod init', { cwd: './ios' });
-    spinner.succeed('initialized podfile');
-  }
-  // install pods
-  spinner.text = 'install pods';
-  spinner.start();
-  await system.spawn('pod install', { cwd: './ios' });
-  spinner.succeed('installed pods');
+    // install a npm module
+    await ignite.addModule(NPM_MODULE_NAME, { link: true });
 
-  ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
+    const { apiKey } = await context.prompt.ask([
         {
-            before: 'apply plugin: "com.android.application"',
-            insert: `buildscript {
+            type: 'input',
+            name: 'apiKey',
+            message: 'What is your Fabric API Key?',
+        },
+    ]);
+
+    const podfileExists = await filesystem.exists('./ios/Podfile');
+    let spinner;
+    // initialize Podfile if it does not exist
+    if (!podfileExists) {
+        spinner = print.spin('initialize podfile');
+        spinner.start();
+        await system.spawn('pod init', { cwd: './ios' });
+        ignite.patchInFile(`${process.cwd()}/ios/Podfile`, {
+            delete: `  target '${name}-tvOSTests' do
+    inherit! :search_paths
+    # Pods for testing
+  end`,
+        });
+        spinner.succeed('initialized podfile');
+    }
+
+    // Add Fabric and Crashlytics pods
+    if (!spinner) {
+        spinner = print.spin('add pods');
+    } else {
+        spinner.text = 'add pods';
+    }
+    spinner.start();
+    ignite.patchInFile(`${process.cwd()}/ios/Podfile`, {
+        after: `# Pods for ${name}`,
+        insert: `  pod 'Fabric'
+  pod 'Crashlytics'`,
+    });
+    spinner.succeed('added pods');
+
+    // install pods
+    spinner.text = 'install pods';
+    spinner.start();
+    await system.spawn('pod install', { cwd: './ios' });
+    spinner.succeed('installed pods');
+
+    spinner.text = 'patch native files';
+    spinner.start();
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        before: 'apply plugin: "com.android.application"',
+        insert: `buildscript {
   repositories {
     maven { url 'https://maven.fabric.io/public' }
   }
@@ -45,38 +76,30 @@ const add = async function (context) {
   }
 }
 `,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
-        {
-            after: 'apply plugin: "com.android.application"',
-            insert: `
+    });
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        after: 'apply plugin: "com.android.application"',
+        insert: `
 apply plugin: 'io.fabric'
 
 repositories {
   maven { url 'https://maven.fabric.io/public' }
 }`,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
-        {
-            after: 'compile "com\\.facebook\\.react:react-native',
-            insert: `
+    });
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        after: 'compile "com\\.facebook\\.react:react-native',
+        insert: `
     compile('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') {
         transitive = true;
     }`,
-        }
-    );
+    });
     ignite.patchInFile(
         `${process.cwd()}/android/app/src/main/AndroidManifest.xml`,
         {
             before: '</application>',
-            insert: `      <!-- Replace your Fabric API Key here -->
-      <meta-data
+            insert: `      <meta-data
           android:name="io.fabric.ApiKey"
-          android:value="<FABRIC_API_KEY>"
+          android:value="${apiKey || 'FABRIC_API_KEY'}"
       />`,
         }
     );
@@ -91,33 +114,26 @@ import io.fabric.sdk.android.Fabric;`,
     ignite.patchInFile(
         `${process.cwd()}/android/app/src/main/java/com/${name.toLowerCase()}/MainApplication.java`,
         {
-            before: 'SoLoader\.init',
+            before: 'SoLoader.init',
             insert: `    Fabric.with(this, new Crashlytics());`,
         }
     );
-    ignite.patchInFile(
-        `${process.cwd()}/ios/${name}/AppDelegate.m`,
-        {
-            before: '#import "AppDelegate.h"',
-            insert: `#import <Fabric/Fabric.h>
+    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+        after: '#import "AppDelegate.h"',
+        insert: `#import <Fabric/Fabric.h>
 #import <Crashlytics/Crashlytics.h>`,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/ios/${name}/AppDelegate.m`,
-        {
-            after: 'NSURL \\*jsCodeLocation;',
-            insert: `  [Fabric with:@[[Crashlytics class]]];`,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/ios/${name}/Info.plist`,
-        {
-            before: '<key>CFBundleDevelopmentRegion</key>',
-            insert: `	<key>Fabric</key>
+    });
+    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+        after: 'NSURL \\*jsCodeLocation;',
+        insert: `  [Fabric with:@[[Crashlytics class]]];`,
+    });
+    /* eslint-disable no-tabs */
+    ignite.patchInFile(`${process.cwd()}/ios/${name}/Info.plist`, {
+        before: '<key>CFBundleDevelopmentRegion</key>',
+        insert: `	<key>Fabric</key>
 	<dict>
 		<key>APIKey</key>
-		<string><FABRIC_API_KEY></string>
+		<string>${apiKey || 'FABRIC_API_KEY'}</string>
 		<key>Kits</key>
 		<array>
 			<dict>
@@ -128,42 +144,52 @@ import io.fabric.sdk.android.Fabric;`,
 			</dict>
 		</array>
 	</dict>`,
-        }
-    );
+    });
+    /* eslint-enable no-tabs */
+    spinner.stop();
 
     print.info(`
       ${print.colors.yellow('Almost done! You still need to do something!')}
 
       Finish to Setup Crashlytics manually.
-        - iOS: (Documentation: ${print.colors.blue('https://fabric.io/kits/ios/crashlytics/install')})
+        - iOS: ( Documentation: ${print.colors.blue(
+        'https://fabric.io/kits/ios/crashlytics/install'
+    )} )
           -> Add the ${print.colors.blue('Script build phase')}
-          -> Replace the FABRIC_API_KEY in ${print.colors.blue('ios/${name}/Info.plist')}
-        - Android: (Documentation: ${print.colors.blue('https://fabric.io/kits/android/crashlytics/install')})
-          -> Replace the FABRIC_API_KEY in ${print.colors.blue('android/app/src/main/AndroidManifest.xml')}
-    `)
+          ${
+    !apiKey
+        ? `-> Replace the FABRIC_API_KEY in ${print.colors.blue(
+            `ios/${name}/Info.plist`
+        )}`
+        : ''
 }
+          ${
+    !apiKey
+        ? `        - Android: (Documentation: ${print.colors.blue(
+            'https://fabric.io/kits/android/crashlytics/install'
+        )})
+          -> Replace the FABRIC_API_KEY in ${print.colors.blue(
+        'android/app/src/main/AndroidManifest.xml'
+    )}`
+        : ''
+}
+    `);
+};
 
 /**
  * Remove ourself from the project.
  */
 const remove = async function (context) {
-  const { ignite, print, filesystem } = context
+    const { ignite, print, filesystem } = context;
 
-  const spinner = print.spin(`removing ${NPM_MODULE_NAME} module`);
-  // remove the npm module
-  spinner.start();
-  await ignite.removeModule(NPM_MODULE_NAME, { unlink: true })
-  spinner.succeed(`removed '${NPM_MODULE_NAME}' module`);
+    const spinner = print.spin('remove native files patches');
 
-  // Get android module name
-  const package = filesystem.read("package.json", "json");
-  const name = package.name;
+    // Get android module name
+    const NPMPackage = filesystem.read('package.json', 'json');
+    const name = NPMPackage.name;
 
-  ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
-        {
-            delete: `
-buildscript {
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        delete: `buildscript {
   repositories {
     maven { url 'https://maven.fabric.io/public' }
   }
@@ -177,30 +203,25 @@ buildscript {
     classpath 'io.fabric.tools:gradle:1.+'
   }
 }
+
 `,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
-        {
-            after: 'apply plugin: "com.android.application"',
-            insert: `
+    });
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        delete: `
+
 apply plugin: 'io.fabric'
 
 repositories {
   maven { url 'https://maven.fabric.io/public' }
 }`,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/android/app/build.gradle`,
-        {
-            delete: `
+    });
+    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+        delete: `
+
     compile('com.crashlytics.sdk.android:crashlytics:2.8.0@aar') {
         transitive = true;
     }`,
-        }
-    );
+    });
     ignite.patchInFile(
         `${process.cwd()}/android/app/src/main/java/com/${name.toLowerCase()}/MainApplication.java`,
         {
@@ -211,22 +232,28 @@ import io.fabric.sdk.android.Fabric;`,
     ignite.patchInFile(
         `${process.cwd()}/android/app/src/main/java/com/${name.toLowerCase()}/MainApplication.java`,
         {
-            delete: `    Fabric.with(this, new Crashlytics());`,
+            delete: `    Fabric.with(this, new Crashlytics());
+`,
         }
     );
-    ignite.patchInFile(
-        `${process.cwd()}/ios/${name}/AppDelegate.m`,
-        {
-            delete: `#import <Fabric/Fabric.h>
-#import <Crashlytics/Crashlytics.h>`,
-        }
-    );
-    ignite.patchInFile(
-        `${process.cwd()}/ios/${name}/AppDelegate.m`,
-        {
-            delete: `  [Fabric with:@[[Crashlytics class]]];`,
-        }
-    );
+    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+        delete: `#import <Fabric/Fabric.h>
+#import <Crashlytics/Crashlytics.h>
+`,
+    });
+    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+        delete: `  [Fabric with:@[[Crashlytics class]]];
+`,
+    });
+    ignite.patchInFile(`${process.cwd()}/ios/Podfile`, {
+        delete: `
+  pod 'Fabric'
+  pod 'Crashlytics'`,
+    });
+    spinner.succeed(`removed native files patches`);
+
+    // remove the npm module
+    await ignite.removeModule(NPM_MODULE_NAME, { unlink: true });
 
     print.info(`
       ${print.colors.yellow('Almost done! You still need to do something!')}
@@ -236,10 +263,19 @@ import io.fabric.sdk.android.Fabric;`,
         - ${process.cwd()}/ios/${name}/Info.plist
 
       Remove the iOS script build phase
-    `)
-}
+
+      If you were not using Pods before adding this plugin, you can delete the following files/folders:
+        - ios/Pods
+        - ios/Podfile
+        - ios/Podfile.lock
+        - ios/${name}.xcworkspace
+    `);
+};
 
 /**
  * Expose an ignite plugin interface.
  */
-module.exports = { add, remove }
+module.exports = {
+    add,
+    remove,
+};
