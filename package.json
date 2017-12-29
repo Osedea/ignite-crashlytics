@@ -1,0 +1,23 @@
+{
+  "name": "ignite-fabric",
+  "description": "An Ignite plugin which installs react-native-fabric and most of the native stuff.",
+  "version": "0.0.1",
+  "license": "MIT",
+  "files": [
+    "README.md",
+    "plugin.js",
+    "templates"
+  ],
+  "repository": "Osedea/ignite-fabric",
+  "author": {
+    "name": "OSEDEA",
+    "email": "npm@osedea.com",
+    "url": "https://osedea.com"
+  },
+  "scripts": {
+    "test": "ava"
+  },
+  "devDependencies": {
+    "ava": "^0.18.2"
+  }
+}
