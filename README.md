@@ -11,7 +11,7 @@ ignite remove ignite-fabric
 
 ## What does it do
 
-Basically, most of: [https://fabric.io/kits/ios/crashlytics/install]() and [https://fabric.io/kits/android/crashlytics/install]()
+Basically, most of: [https://fabric.io/kits/ios/crashlytics/install](https://fabric.io/kits/ios/crashlytics/install) and [https://fabric.io/kits/android/crashlytics/install](https://fabric.io/kits/android/crashlytics/install)
 
 * Adding `react-native-fabric`
 * iOS:
@@ -29,10 +29,10 @@ When adding:
 
 ```
 - iOS:
-    -> Add the ${print.colors.blue('Script build phase')} as stated in the documentation
-    -> Replace the FABRIC_API_KEY in ${print.colors.blue('ios/${name}/Info.plist')}
+    -> Add the 'Script build phase' as stated in the documentation (see links above)
+    -> Replace the FABRIC_API_KEY in 'ios/${name}/Info.plist'
 - Android:
-    -> Replace the FABRIC_API_KEY in ${print.colors.blue('android/app/src/main/AndroidManifest.xml')}
+    -> Replace the FABRIC_API_KEY in 'android/app/src/main/AndroidManifest.xml'
 ```
 
 When removing:
@@ -43,3 +43,5 @@ Remove your Fabric API Key from:
 
 Remove the iOS script build phase
 ```
+
+**Disclosure**: I totally copied and modified [ignite-animatable](https://github.com/infinitered/ignite-animatable). Thanks [@skellock](https://github.com/skellock) for the help and [@infinitered](https://github.com/infinitered/) for the awesome job you guys are doing :)
