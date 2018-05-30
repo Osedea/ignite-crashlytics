@@ -1,5 +1,5 @@
 {
-  "name": "ignite-fabric",
+  "name": "ignite-crashlytics",
   "description": "An Ignite plugin which installs react-native-fabric and most of the native stuff.",
   "version": "0.0.1",
   "license": "MIT",
@@ -8,7 +8,7 @@
     "plugin.js",
     "templates"
   ],
-  "repository": "Osedea/ignite-fabric",
+  "repository": "Osedea/ignite-crashlytics",
   "author": {
     "name": "OSEDEA",
     "email": "npm@osedea.com",
