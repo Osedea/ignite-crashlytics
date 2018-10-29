@@ -8,6 +8,13 @@ This plugin has been adapted to work with the new installation of Crashlytics as
 
 Therefore, we can't assure that all features of `react-native-fabric` will work with that installation.
 
+## Compatibility
+
+RN Version | ignite-crashlytics Version
+--- | ---
+0.57.3+ | 0.0.2+
+0.55.4- | 0.0.1
+
 ## Prerequisites
 
 You will need to have a Firebase project and the configuration files (`google-services.json` for Android, `GoogleService-Info.plist` for iOS) in your project.
@@ -47,6 +54,6 @@ When removing:
 Remove the 'Script build phase' from your iOS project
 ```
 
-## Thanks 
+## Thanks
 
 Thanks [@skellock](https://github.com/skellock) for the help and [@infinitered](https://github.com/infinitered/) for the awesome job you guys are doing :)

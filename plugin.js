@@ -58,45 +58,79 @@ const add = async function (context) {
             url 'https://maven.fabric.io/public'
         }`,
     });
-    ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
-        after: 'dependencies {',
-        insert: `        classpath 'io.fabric.tools:gradle:1.25.4'`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
-        after: 'dependencies {',
-        insert: `        classpath 'com.google.gms:google-services:3.2.0'`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
-        after: 'mavenLocal()',
-        insert: `        maven {
-            url 'https://maven.google.com/'
-        }`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-        after: 'apply plugin: "com.android.application"',
-        insert: `apply plugin: "io.fabric"`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-        after: 'compile "com\\.facebook\\.react:react-native',
-        insert: `    compile "com.crashlytics.sdk.android:crashlytics:2.9.3"`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-        after: 'compile "com\\.facebook\\.react:react-native',
-        insert: `    compile "com.google.firebase:firebase-core:15.0.0"`,
-    });
-    ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-        before: '// Run this once to be able to run the application with BUCK',
-        insert: `apply plugin: 'com.google.gms.google-services'`,
-    });
-    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
-        before: '@implementation AppDelegate',
-        insert: `@import Firebase;
-`,
-    });
-    ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
-        after: 'NSURL \\*jsCodeLocation;',
-        insert: `  [FIRApp configure];`,
-    });
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
+            after: 'dependencies {',
+            insert: `        classpath 'io.fabric.tools:gradle:1.25.4'`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
+            after: 'dependencies {',
+            insert: `        classpath 'com.google.gms:google-services:4.1.0'`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
+            after: 'mavenLocal()',
+            insert: `        google()`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+            after: 'apply plugin: "com.android.application"',
+            insert: `apply plugin: "io.fabric"`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+            after: 'implementation "com\\.facebook\\.react:react-native',
+            insert: `    implementation "com.crashlytics.sdk.android:crashlytics:2.9.5"`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+            after: 'compile "com\\.facebook\\.react:react-native',
+            insert: `    compile "com.google.firebase:firebase-core:16.0.4"`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
+            before: '// Run this once to be able to run the application with BUCK',
+            insert: `apply plugin: 'com.google.gms.google-services'`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+            before: '@implementation AppDelegate',
+            insert: `@import Firebase;
+    `,
+        });
+    } catch (error) {
+        console.error(error);
+    }
+    try {
+        ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
+            after: 'NSURL \\*jsCodeLocation;',
+            insert: `  [FIRApp configure];`,
+        });
+    } catch (error) {
+        console.error(error);
+    }
     spinner.stop();
 
     print.info(`
@@ -165,7 +199,7 @@ const remove = async function (context) {
         delete: `apply plugin: "io.fabric"`,
     });
     ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-        delete: `    compile "com.crashlytics.sdk.android:crashlytics:2.9.3"`,
+        delete: `    compile "com.crashlytics.sdk.android:crashlytics:2.9.5"`,
     });
     ignite.patchInFile(`${process.cwd()}/ios/Podfile`, {
         delete: `
@@ -174,7 +208,7 @@ const remove = async function (context) {
     });
     if (removeFirebase === 'Yes') {
         ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
-            delete: `    compile "com.google.firebase:firebase-core:15.0.0"`,
+            delete: `    compile "com.google.firebase:firebase-core:16.0.4"`,
         });
         ignite.patchInFile(`${process.cwd()}/ios/${name}/AppDelegate.m`, {
             delete: `@import Firebase;
@@ -187,7 +221,7 @@ const remove = async function (context) {
             delete: `  pod 'Firebase/Core'`,
         });
         ignite.patchInFile(`${process.cwd()}/android/build.gradle`, {
-            delete: `classpath 'com.google.gms:google-services:3.2.0'`,
+            delete: `classpath 'com.google.gms:google-services:4.1.0'`,
         });
         ignite.patchInFile(`${process.cwd()}/android/app/build.gradle`, {
             delete: `apply plugin: 'com.google.gms.google-services'`,

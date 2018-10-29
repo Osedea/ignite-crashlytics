@@ -1,7 +1,7 @@
 {
   "name": "ignite-crashlytics",
   "description": "An Ignite plugin which installs react-native-fabric and most of the native stuff.",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license": "MIT",
   "files": [
     "README.md",
